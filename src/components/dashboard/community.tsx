@@ -73,7 +73,7 @@ export function Community() {
                     ) : (
                         <ul className="space-y-3">
                             {leaderboard.map((user, index) => (
-                                <li key={user.username} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                                <li key={user.uid} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
                                 <div className="flex items-center gap-3">
                                         <span className="font-bold text-lg text-muted-foreground w-4">{index + 1}</span>
                                         <Avatar className="h-8 w-8">

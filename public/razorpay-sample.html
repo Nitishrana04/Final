@@ -1,0 +1,46 @@
+<!--
+  A standalone sample page to test Razorpay checkout integration.
+  Replace YOUR_KEY_ID with your actual Razorpay key (for dev use only).
+  Open this file in a browser or from the dev server at /razorpay-sample.html
+-->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Razorpay Sample</title>
+</head>
+<body>
+  <button id="rzp-button1">Pay</button>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+  var options = {
+      "key": "YOUR_KEY_ID", // Enter the Key ID generated from the Dashboard
+      "amount": "50000", // Amount is in currency subunits. Example: 50000 paise = ₹500
+      "currency": "INR",
+      "name": "Acme Corp",
+      "description": "Test Transaction",
+      "image": "https://example.com/your_logo",
+      // If you have an order id from your server, set it here. Example: 'order_XXXX'
+      // "order_id": "order_9A33XWu170gUtm",
+      "callback_url": "https://eneqd3r9zrjok.x.pipedream.net/",
+      "prefill": {
+          "name": "Test User",
+          "email": "test@example.com",
+          "contact": "9999999999"
+      },
+      "notes": {
+          "address": "Razorpay Corporate Office"
+      },
+      "theme": {
+          "color": "#3399cc"
+      }
+  };
+  var rzp1 = new Razorpay(options);
+  document.getElementById('rzp-button1').onclick = function(e){
+      rzp1.open();
+      e.preventDefault();
+  }
+  </script>
+</body>
+</html>

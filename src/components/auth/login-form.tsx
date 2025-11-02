@@ -43,11 +43,16 @@ export function LoginForm() {
         router.push('/redirect');
 
     } catch (error: any) {
-        let errorMessage = "Invalid credentials. Please try again.";
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            errorMessage = "Invalid email or password. Please ensure you have registered first.";
-        }
-        console.error("Login error:", error);
+    // Provide a bit more detail during development to help debugging authentication issues.
+    console.error("Login error:", error?.code, error?.message, error);
+    let errorMessage = "Invalid credentials. Please try again.";
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      errorMessage = "Invalid email or password. Please ensure you have registered first.";
+    }
+    // In development, show the Firebase error message to help triage (don't expose in production).
+    if (process.env.NODE_ENV === 'development' && error?.message) {
+      errorMessage = `${errorMessage} (${error.message})`;
+    }
         toast({
             variant: "destructive",
             title: "Login Failed",
