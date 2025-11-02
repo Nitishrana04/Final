@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ================================
+    // 🔐 Helper Functions
+    // ================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getUserRole(request.auth.uid) == 'admin';
+    }
+
+    function isGymOwner(userId) {
+      return isSignedIn() && getUserRole(userId) == 'gym-owner';
+    }
+    
+    function isMemberOfGym(userId, gymOwnerId) {
+        return get(/databases/$(database)/documents/users/$(userId)).data.gymId == gymOwnerId;
+    }
+
+    // ================================
+    // 👤 Users Collection
+    // ================================
+    match /users/{userId} {
+      // READ:
+      // - Admins can read any user profile.
+      // - A user can read their own profile.
+      // - A gym owner can read the profile of a user who is a member of their gym.
+      // - Any authenticated user can read public profiles (for leaderboards etc).
+      allow get: if isSignedIn();
+
+      // LIST (QUERY):
+      // - Admins can list all users.
+      // - A gym owner can list users, but ONLY if they are filtering by their own gymId.
+      allow list: if isAdmin() || (isGymOwner(request.auth.uid) && request.query.resource.data.gymId == request.auth.uid);
+
+      // WRITE:
+      // - A new user can create their own profile.
+      allow create: if isOwner(userId);
+      // - A user can update their own profile.
+      // - An admin can update any user profile.
+      allow update: if isOwner(userId) || isAdmin();
+      // - A user can delete their own account.
+      allow delete: if isOwner(userId);
+    }
+
+    // ================================
+    // 🏋️ Gyms Collection
+    // ================================
+    match /gyms/{gymId} {
+      // READ: Anyone can look up gym information (needed for registration dropdown).
+      allow get, list: if isSignedIn();
+      // WRITE: Only the owner of the gym can create or update it.
+      allow create, update: if isOwner(gymId);
+      allow delete: if false; // Deleting gyms is not allowed.
+    }
+    
+    // ======================================
+    // 🗂️ User Sub-collections
+    // ======================================
+    match /users/{userId}/{collectionId}/{docId} {
+        // READ/WRITE:
+        // - A user can access their own sub-collections.
+        // - An admin can access any user's sub-collections.
+        // - A gym owner can access sub-collections of their own members.
+        allow read, write: if isOwner(userId) || isAdmin() || (isGymOwner(request.auth.uid) && isMemberOfGym(userId, request.auth.uid));
+    }
+
+
+    // ================================
+    // 🎁 Redemption Requests
+    // ================================
+    match /redemptionRequests/{requestId} {
+      // - A user can create a redemption request for themselves.
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // - Admins can view/list all redemption requests.
+      allow get, list: if isAdmin();
+      // - Admins can approve/reject (update) requests.
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+  }
+}
